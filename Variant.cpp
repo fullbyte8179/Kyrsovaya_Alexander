@@ -4,14 +4,12 @@
 #include <cmath>
 #include <limits>
 #include <iomanip>
-#include <ctime>
 
 using namespace std;
 
 // --- КОНСТАНТЫ ---
-const double CAP_RATE = 0.07;
-const double COST_COEFF = 0.3;
-const int SESSION_LIMIT = 180; 
+const double CAP_RATE = 0.07;    // Ставка капитализации (7%)
+const double COST_COEFF = 0.3;   // Коэффициент затрат (30%)
 
 // --- СТРУКТУРЫ ---
 struct CalculationResult {
@@ -52,27 +50,20 @@ void pause_console() {
     cin.get();
 }
 
-void print_timeout_message() {
-    cout << "\n  ***************************************************\n";
-    cout << "  *  ВНИМАНИЕ: ВРЕМЯ СЕССИИ (3 МИНУТЫ) ИСТЕКЛО!     *\n";
-    cout << "  ***************************************************\n";
-}
-
-// --- ВВОД ---
-double get_secure_input(string prompt, double min, double max, time_t start_time) {
+// --- ВВОД (ЗАЩИТА ОТ ОШИБОК) ---
+double get_secure_input(string prompt, double min, double max) {
     double value;
     while (true) {
-        if (difftime(time(0), start_time) > SESSION_LIMIT) return -1.0;
-
         cout << "  > Введите " << prompt << ": ";
+        
         if (cin >> value) {
-            if (difftime(time(0), start_time) > SESSION_LIMIT) return -1.0;
-
+            // Проверка на мусор после числа
             if (cin.peek() != '\n') {
                 cout << "    [ОШИБКА] Обнаружены буквы! Введите только цифры.\n";
                 cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 continue;
             }
+            // Проверка диапазона
             if (value >= min && value <= max) {
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 return value;
@@ -80,6 +71,7 @@ double get_secure_input(string prompt, double min, double max, time_t start_time
                 cout << "    [ОШИБКА] Допустимый диапазон: " << min << " ... " << max << "\n";
             }
         } else {
+            // Если ввели текст
             cout << "    [ОШИБКА] Это не число. Попробуйте снова.\n";
             cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
@@ -89,15 +81,20 @@ double get_secure_input(string prompt, double min, double max, time_t start_time
 // --- РАСЧЕТ ---
 CalculationResult calculate(double area, double bonitet, double income, double loc_k, double market_k) {
     CalculationResult res;
+    
+    // Рента
     double rent = (income * (bonitet / 100.0)) - (income * COST_COEFF);
     
+    // Защита от минуса
     if (rent < 0) res.raw_rent = 0;
     else res.raw_rent = rent;
 
+    // Капитализация
     double adj_rent = res.raw_rent * loc_k;
     res.cadastral_value = (adj_rent / CAP_RATE) * area;
     res.market_value = res.cadastral_value * market_k;
     
+    // Эффективность
     if (income > 0) res.rent_score = adj_rent / income;
     else res.rent_score = 0;
 
@@ -114,7 +111,6 @@ void print_verdict(CalculationResult res) {
 }
 
 // --- ДИАГНОСТИКА ---
-// Возвращает false, если пользователь выбрал "Выход из программы"
 bool run_diagnostics() {
     print_header();
     cout << "  [РЕЖИМ АВТОМАТИЧЕСКОЙ ДИАГНОСТИКИ]\n\n";
@@ -124,19 +120,9 @@ bool run_diagnostics() {
     
     cout << "  Нажмите 1 для СТАРТА или 0 для ВОЗВРАТА В МЕНЮ.\n";
     
-    int choice;
-    while (true) {
-        cout << "  > Ваш выбор: ";
-        if (cin >> choice) {
-            if (choice == 1 || choice == 0) {
-                cin.ignore(1000, '\n'); break;
-            }
-        }
-        cout << "    Введите 1 или 0!\n";
-        cin.clear(); cin.ignore(1000, '\n');
-    }
+    int choice = (int)get_secure_input("Ваш выбор", 0, 1);
 
-    if (choice == 0) return true; // Возврат в меню
+    if (choice == 0) return true;
 
     cout << "\n  >>> ЗАПУСК ТЕСТОВ...\n";
     
@@ -173,50 +159,35 @@ bool run_diagnostics() {
     cout << "  РЕЗУЛЬТАТ: Пройдено " << passed << " из 5 тестов.\n";
     print_separator();
 
-    // МЕНЮ ПОСЛЕ ТЕСТОВ
     cout << "  1. Вернуться в Главное Меню\n";
     cout << "  2. Выйти из программы\n";
     
-    int post_choice;
-    while (true) {
-        cout << "  > Ваш выбор: ";
-        if (cin >> post_choice) {
-            if (post_choice == 1) return true;  // Меню
-            if (post_choice == 2) return false; // Выход
-        }
-        cout << "    Введите 1 или 2!\n";
-        cin.clear(); cin.ignore(1000, '\n');
-    }
+    int post_choice = (int)get_secure_input("Ваш выбор", 1, 2);
+    
+    if (post_choice == 1) return true;
+    else return false;
 }
 
 // --- РАСЧЕТ ---
 void run_calculation_mode() {
     print_header();
     cout << "  [РЕЖИМ РАСЧЕТА СТОИМОСТИ]\n";
-    cout << "  Таймер: 3 минуты на ввод всех данных.\n";
     print_separator();
 
-    time_t start_time = time(0);
-
     print_tooltip("ПЛОЩАДЬ", "Размер участка в гектарах (например, 100).");
-    double s = get_secure_input("площадь", 0.01, 1e6, start_time);
-    if (s < 0) { print_timeout_message(); return; }
+    double s = get_secure_input("площадь", 0.01, 1e6);
 
     print_tooltip("БОНИТЕТ", "Качество почвы (0-100). 100 - чернозем.");
-    double b = get_secure_input("бонитет", 0.0, 100.0, start_time);
-    if (b < 0) { print_timeout_message(); return; }
+    double b = get_secure_input("бонитет", 0.0, 100.0);
 
     print_tooltip("ДОХОД", "Выручка с 1 га (грязными, в рублях).");
-    double i = get_secure_input("доход", 0.0, 1e9, start_time);
-    if (i < 0) { print_timeout_message(); return; }
+    double i = get_secure_input("доход", 0.0, 1e9);
 
     print_tooltip("ЛОКАЦИЯ", "Коэф. инфраструктуры. 1.0 - норма, <1 - глушь.");
-    double k1 = get_secure_input("коэф. локации", 0.1, 2.0, start_time);
-    if (k1 < 0) { print_timeout_message(); return; }
+    double k1 = get_secure_input("коэф. локации", 0.1, 2.0);
 
     print_tooltip("РЫНОК", "Коэф. спроса. 1.0 - баланс, >1 - дефицит.");
-    double k2 = get_secure_input("рыночный коэф.", 0.5, 3.0, start_time);
-    if (k2 < 0) { print_timeout_message(); return; }
+    double k2 = get_secure_input("рыночный коэф.", 0.5, 3.0);
 
     CalculationResult res = calculate(s, b, i, k1, k2);
     
@@ -243,14 +214,13 @@ int main() {
         cout << "  3. Выход\n";
         print_separator();
         
-        int choice = (int)get_secure_input("номер пункта", 1, 3, time(0) + 99999);
+        int choice = (int)get_secure_input("номер пункта", 1, 3);
 
         switch (choice) {
             case 1:
                 run_calculation_mode();
                 break;
             case 2:
-                // Если тесты вернули false (пользователь выбрал "Выход"), закрываем цикл
                 if (!run_diagnostics()) active = false;
                 break;
             case 3:
