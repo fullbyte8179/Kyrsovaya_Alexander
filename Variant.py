@@ -1,10 +1,8 @@
 import sys
-import time
 
 # --- КОНСТАНТЫ ---
 CAP_RATE = 0.07      # Ставка капитализации 7%
 COST_COEFF = 0.3     # Затраты 30%
-SESSION_LIMIT = 180  # Лимит 3 минуты
 
 # --- ИНТЕРФЕЙС ---
 
@@ -25,29 +23,14 @@ def print_tooltip(title, info):
 def pause_console():
     input("\n  >> Нажмите Enter для продолжения...")
 
-def print_timeout_message():
-    print("\n  ***************************************************")
-    print("  *  ВНИМАНИЕ: ВРЕМЯ СЕССИИ (3 МИНУТЫ) ИСТЕКЛО!     *")
-    print("  ***************************************************")
-
 # --- ЯДРО БЕЗОПАСНОСТИ ---
 
-def get_secure_input(prompt, min_val, max_val, start_time):
+def get_secure_input(prompt, min_val, max_val):
     """
-    Ввод с защитой от ошибок и контролем времени.
-    Возвращает -1, если время вышло.
+    Ввод с защитой от ошибок (без таймера).
     """
     while True:
-        # Проверка времени ДО ввода
-        if time.time() - start_time > SESSION_LIMIT:
-            return -1.0
-
         raw = input(f"  > Введите {prompt}: ")
-
-        # Проверка времени ПОСЛЕ ввода
-        if time.time() - start_time > SESSION_LIMIT:
-            return -1.0
-
         try:
             # Замена запятой на точку (для удобства)
             val = float(raw.replace(',', '.'))
@@ -69,7 +52,7 @@ def calculate(area, bonitet, income, loc_k, market_k):
     raw_rent = rent if rent >= 0 else 0
 
     # 2. Локация и капитализация
-    adj_rent = raw_rent * loc_k;
+    adj_rent = raw_rent * loc_k
     cadastral = (adj_rent / CAP_RATE) * area
 
     # 3. Рынок
@@ -180,35 +163,26 @@ def run_diagnostics():
 def run_calculation_mode():
     print_header()
     print("  [РЕЖИМ РАСЧЕТА СТОИМОСТИ]")
-    print("  Таймер: 3 минуты на ввод всех данных.")
     print_separator()
 
-    start_time = time.time()
+    # Ввод
+    print_tooltip("ПЛОЩАДЬ", "Размер участка в гектарах.")
+    s = get_secure_input("площадь", 0.01, 1e6)
 
-    # Ввод с подробными подсказками
-    print_tooltip("ПЛОЩАДЬ", "Размер участка в гектарах (например, 100).")
-    s = get_secure_input("площадь", 0.01, 1e6, start_time)
-    if s == -1: return print_timeout_message()
+    print_tooltip("БОНИТЕТ", "Качество почвы (0-100).")
+    b = get_secure_input("бонитет", 0.0, 100.0)
 
-    print_tooltip("БОНИТЕТ", "Качество почвы (0-100). 100 - чернозем.")
-    b = get_secure_input("бонитет", 0.0, 100.0, start_time)
-    if b == -1: return print_timeout_message()
+    print_tooltip("ДОХОД", "Выручка с 1 га (руб).")
+    i = get_secure_input("доход", 0.0, 1e9)
 
-    print_tooltip("ДОХОД", "Выручка с 1 га (грязными, в рублях).")
-    i = get_secure_input("доход", 0.0, 1e9, start_time)
-    if i == -1: return print_timeout_message()
+    print_tooltip("ЛОКАЦИЯ", "Коэф. инфраструктуры (0.1 - 2.0).")
+    k1 = get_secure_input("коэф. локации", 0.1, 2.0)
 
-    print_tooltip("ЛОКАЦИЯ", "Коэф. инфраструктуры. 1.0 - норма, <1 - глушь.")
-    k1 = get_secure_input("коэф. локации", 0.1, 2.0, start_time)
-    if k1 == -1: return print_timeout_message()
-
-    print_tooltip("РЫНОК", "Коэф. спроса. 1.0 - баланс, >1 - дефицит.")
-    k2 = get_secure_input("рыночный коэф.", 0.5, 3.0, start_time)
-    if k2 == -1: return print_timeout_message()
+    print_tooltip("РЫНОК", "Коэф. спроса (0.5 - 3.0).")
+    k2 = get_secure_input("рыночный коэф.", 0.5, 3.0)
 
     # Расчет
     res = calculate(s, b, i, k1, k2)
-    elapsed = int(time.time() - start_time)
 
     print_separator()
     print("  ФИНАНСОВЫЙ ОТЧЕТ:")
@@ -232,8 +206,7 @@ def main():
         print("  3. Выход")
         print_separator()
         
-        # Меню тоже защищено, но с "бесконечным" таймером
-        choice = get_secure_input("номер пункта", 1, 3, time.time() + 99999)
+        choice = get_secure_input("номер пункта", 1, 3)
         
         if choice == 1:
             run_calculation_mode()
