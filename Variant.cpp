@@ -7,11 +7,11 @@
 
 using namespace std;
 
-// --- КОНСТАНТЫ ---
+
 const double CAP_RATE = 0.07;    // Ставка капитализации (7%)
 const double COST_COEFF = 0.3;   // Коэффициент затрат (30%)
 
-// --- СТРУКТУРЫ ---
+
 struct CalculationResult {
     double cadastral_value;
     double rent_score;
@@ -26,7 +26,7 @@ struct TestCase {
     bool expect_success;
 };
 
-// --- ИНТЕРФЕЙС ---
+
 void print_header() {
     cout << "\n\n";
     cout << "  ==================================================\n";
@@ -50,7 +50,7 @@ void pause_console() {
     cin.get();
 }
 
-// --- ВВОД (ЗАЩИТА ОТ ОШИБОК) ---
+
 double get_secure_input(string prompt, double min, double max) {
     double value;
     while (true) {
@@ -63,7 +63,7 @@ double get_secure_input(string prompt, double min, double max) {
                 cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 continue;
             }
-            // Проверка диапазона
+            
             if (value >= min && value <= max) {
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 return value;
@@ -71,37 +71,37 @@ double get_secure_input(string prompt, double min, double max) {
                 cout << "    [ОШИБКА] Допустимый диапазон: " << min << " ... " << max << "\n";
             }
         } else {
-            // Если ввели текст
+            
             cout << "    [ОШИБКА] Это не число. Попробуйте снова.\n";
             cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
     }
 }
 
-// --- РАСЧЕТ ---
+
 CalculationResult calculate(double area, double bonitet, double income, double loc_k, double market_k) {
     CalculationResult res;
     
-    // Рента
+    
     double rent = (income * (bonitet / 100.0)) - (income * COST_COEFF);
     
-    // Защита от минуса
+    
     if (rent < 0) res.raw_rent = 0;
     else res.raw_rent = rent;
 
-    // Капитализация
+    
     double adj_rent = res.raw_rent * loc_k;
     res.cadastral_value = (adj_rent / CAP_RATE) * area;
     res.market_value = res.cadastral_value * market_k;
     
-    // Эффективность
+    
     if (income > 0) res.rent_score = adj_rent / income;
     else res.rent_score = 0;
 
     return res;
 }
 
-// --- ВЕРДИКТ ---
+
 void print_verdict(CalculationResult res) {
     cout << "\n  --- ЭКСПЕРТНОЕ ЗАКЛЮЧЕНИЕ ---\n";
     if (res.raw_rent == 0) cout << "  СТАТУС: УБЫТОЧНЫЙ ОБЪЕКТ (Неликвид).\n  Совет: Затраты превышают доход.\n";
@@ -110,7 +110,7 @@ void print_verdict(CalculationResult res) {
     else cout << "  СТАТУС: ВЫСОКОДОХОДНЫЙ АКТИВ!\n  Совет: Отличная инвестиция.\n";
 }
 
-// --- ДИАГНОСТИКА ---
+
 bool run_diagnostics() {
     print_header();
     cout << "  [РЕЖИМ АВТОМАТИЧЕСКОЙ ДИАГНОСТИКИ]\n\n";
@@ -168,7 +168,7 @@ bool run_diagnostics() {
     else return false;
 }
 
-// --- РАСЧЕТ ---
+
 void run_calculation_mode() {
     print_header();
     cout << "  [РЕЖИМ РАСЧЕТА СТОИМОСТИ]\n";
@@ -202,7 +202,7 @@ void run_calculation_mode() {
     pause_console();
 }
 
-// --- MAIN ---
+
 int main() {
     setlocale(LC_ALL, "Russian");
     bool active = true;
