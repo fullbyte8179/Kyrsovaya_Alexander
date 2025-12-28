@@ -1,10 +1,10 @@
 import sys
 
-# --- КОНСТАНТЫ ---
+
 CAP_RATE = 0.07      # Ставка капитализации 7%
 COST_COEFF = 0.3     # Затраты 30%
 
-# --- ИНТЕРФЕЙС ---
+
 
 def print_header():
     print("\n\n")
@@ -23,7 +23,7 @@ def print_tooltip(title, info):
 def pause_console():
     input("\n  >> Нажмите Enter для продолжения...")
 
-# --- ЯДРО БЕЗОПАСНОСТИ ---
+
 
 def get_secure_input(prompt, min_val, max_val):
     """
@@ -32,7 +32,7 @@ def get_secure_input(prompt, min_val, max_val):
     while True:
         raw = input(f"  > Введите {prompt}: ")
         try:
-            # Замена запятой на точку (для удобства)
+           
             val = float(raw.replace(',', '.'))
             
             if min_val <= val <= max_val:
@@ -42,23 +42,23 @@ def get_secure_input(prompt, min_val, max_val):
         except ValueError:
             print("    [ОШИБКА] Это не число. Попробуйте снова.")
 
-# --- РАСЧЕТ ---
+
 
 def calculate(area, bonitet, income, loc_k, market_k):
-    # 1. Рентный доход
+    
     rent = (income * (bonitet / 100.0)) - (income * COST_COEFF)
     
-    # Защита от минуса
+    
     raw_rent = rent if rent >= 0 else 0
 
-    # 2. Локация и капитализация
+    
     adj_rent = raw_rent * loc_k
     cadastral = (adj_rent / CAP_RATE) * area
 
-    # 3. Рынок
+    
     market = cadastral * market_k
     
-    # 4. Эффективность
+    
     if income > 0:
         rent_score = adj_rent / income
     else:
@@ -86,7 +86,7 @@ def print_verdict(res):
         print("  СТАТУС: ВЫСОКОДОХОДНЫЙ АКТИВ!")
         print("  Совет: Отличная инвестиция.")
 
-# --- ДИАГНОСТИКА ---
+
 
 def run_diagnostics():
     print_header()
@@ -106,7 +106,7 @@ def run_diagnostics():
 
     print("\n  >>> ЗАПУСК ТЕСТОВ...")
     
-    # База тестов
+    
     tests = [
         ("ЗОЛОТАЯ ЖИЛА", "Идеальный участок, высокий доход", 
          [100.0, 90.0, 60000.0, 1.0, 1.0], True),
@@ -148,7 +148,7 @@ def run_diagnostics():
     print(f"  РЕЗУЛЬТАТ: Пройдено {passed} из 5 тестов.")
     print_separator()
     
-    # Меню после тестов
+    
     print("  1. Вернуться в Главное Меню")
     print("  2. Выйти из программы")
     
@@ -158,7 +158,7 @@ def run_diagnostics():
         if post_choice == '2': return False
         print("    Введите 1 или 2!")
 
-# --- РАСЧЕТ ---
+
 
 def run_calculation_mode():
     print_header()
@@ -181,7 +181,7 @@ def run_calculation_mode():
     print_tooltip("РЫНОК", "Коэф. спроса (0.5 - 3.0).")
     k2 = get_secure_input("рыночный коэф.", 0.5, 3.0)
 
-    # Расчет
+    
     res = calculate(s, b, i, k1, k2)
 
     print_separator()
@@ -195,7 +195,7 @@ def run_calculation_mode():
     
     pause_console()
 
-# --- MAIN ---
+
 
 def main():
     active = True
